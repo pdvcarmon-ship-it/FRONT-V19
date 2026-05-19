@@ -276,12 +276,7 @@ export default function Home() {
           <p style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>Visor NDVI · Mapa de producción</p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <span className={backendOk ? 'pulse' : ''} style={{ width: 7, height: 7, borderRadius: '50%', display: 'inline-block', background: backendOk === null ? '#4a7a56' : backendOk ? 'var(--green)' : 'var(--red)' }}/>
-          <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
-            {backendOk === null ? 'CONECTANDO...' : backendOk ? 'BACKEND OK' : 'BACKEND OFFLINE'}
-          </span>
-        </div>
+         {/* Header SUPRIMIDO */}
 
         <hr style={{ borderColor: 'var(--border)', borderWidth: '0 0 1px 0' }} />
 
