@@ -1,4 +1,4 @@
-'use client'
+  'use client'
 
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useCallback } from 'react'
@@ -276,7 +276,12 @@ export default function Home() {
           <p style={{ fontSize: 10, color: 'var(--muted)', fontFamily: 'var(--mono)' }}>Visor NDVI · Mapa de producción</p>
         </div>
 
-         {/* Header SUPRIMIDO */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <span className={backendOk ? 'pulse' : ''} style={{ width: 7, height: 7, borderRadius: '50%', display: 'inline-block', background: backendOk === null ? '#4a7a56' : backendOk ? 'var(--green)' : 'var(--red)' }}/>
+          <span style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)' }}>
+            {backendOk === null ? 'CONECTANDO...' : backendOk ? 'BACKEND OK' : 'BACKEND OFFLINE'}
+          </span>
+        </div>
 
         <hr style={{ borderColor: 'var(--border)', borderWidth: '0 0 1px 0' }} />
 
@@ -426,28 +431,72 @@ export default function Home() {
               <div style={{ fontSize: 10, color: 'var(--green)', fontFamily: 'var(--mono)', marginBottom: 4, letterSpacing: '0.06em', fontWeight: 700 }}>KG/HA ESPERADOS POR ZONA:</div>
               <div style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)', marginBottom: 10 }}>Introduce un valor y el resto se calcula por regla de tres</div>
 
-              {zonasConSup.map(z => {
-                const zi = ZONAS_NDVI.find(zn => zn.zona === z.zona)!
-                const tieneInput = kgPorHa[String(z.zona)] !== undefined && kgPorHa[String(z.zona)] !== ''
-                const calculado = kgHaCalculado[String(z.zona)]
-                return (
-                  <div key={z.zona} style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 5 }}>
-                    <div style={{ width: 8, height: 8, borderRadius: 2, background: zi.color, flexShrink: 0 }}/>
-                    <div style={{ fontSize: 10, fontFamily: 'var(--mono)', color: 'var(--muted)', width: 38, flexShrink: 0 }}>Z{z.zona}</div>
-                    <input
-                      type="number"
-                      min="0"
-                      placeholder="kg/ha"
-                      value={kgPorHa[String(z.zona)] || ''}
-                      onChange={e => setKgPorHa({ [String(z.zona)]: e.target.value })}
-                      style={{ flex: 1, background: tieneInput ? 'rgba(61,220,110,0.08)' : 'var(--surface2)', border: `1px solid ${tieneInput ? 'var(--green)' : 'var(--border)'}`, borderRadius: 5, padding: '5px 6px', color: 'var(--text)', fontSize: 11, fontFamily: 'var(--mono)', outline: 'none' }}
-                    />
-                    <div style={{ fontSize: 9, fontFamily: 'var(--mono)', width: 44, textAlign: 'right', color: tieneInput ? 'var(--green)' : 'var(--muted)' }}>
-                      {tieneInput ? 'ref' : calculado !== undefined ? `=${calculado}` : ''}
-                    </div>
+              {/* Selector de zona + kg/ha */}
+              <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+                <select
+                  id="zona-select"
+                  style={{ flex: 1, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 5, padding: '7px 8px', color: 'var(--text)', fontSize: 11, fontFamily: 'var(--mono)', outline: 'none' }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>Selecciona zona...</option>
+                  {zonasConSup.map(z => {
+                    const zi = ZONAS_NDVI.find(zn => zn.zona === z.zona)!
+                    return (
+                      <option key={z.zona} value={String(z.zona)}>
+                        Z{z.zona} · {zi.rango} · {z.sup_ha_real.toFixed(3)}ha
+                      </option>
+                    )
+                  })}
+                </select>
+                <input
+                  id="kg-input"
+                  type="number"
+                  min="0"
+                  placeholder="kg/ha"
+                  style={{ width: 90, background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 5, padding: '7px 8px', color: 'var(--text)', fontSize: 11, fontFamily: 'var(--mono)', outline: 'none' }}
+                />
+                <button
+                  onClick={() => {
+                    const sel = (document.getElementById('zona-select') as HTMLSelectElement)?.value
+                    const kg  = (document.getElementById('kg-input') as HTMLInputElement)?.value
+                    if (sel && kg && Number(kg) > 0) {
+                      setKgPorHa({ [sel]: kg })
+                    }
+                  }}
+                  style={{ padding: '7px 10px', borderRadius: 5, background: 'var(--green)', border: 'none', color: 'var(--bg)', fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700, cursor: 'pointer' }}
+                >
+                  ✓
+                </button>
+              </div>
+
+              {/* Valores calculados */}
+              {Object.keys(kgHaCalculado).length > 0 && (
+                <div style={{ background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: 6, padding: '8px 10px', marginBottom: 8 }}>
+                  <div style={{ fontSize: 9, color: 'var(--muted)', fontFamily: 'var(--mono)', marginBottom: 6, letterSpacing: '0.06em' }}>VALORES CALCULADOS:</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 3 }}>
+                    {zonasConSup.map(z => {
+                      const zi = ZONAS_NDVI.find(zn => zn.zona === z.zona)!
+                      const val = kgHaCalculado[String(z.zona)]
+                      const esRef = kgPorHa[String(z.zona)] !== undefined && kgPorHa[String(z.zona)] !== ''
+                      if (!val) return null
+                      return (
+                        <div key={z.zona} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <div style={{ width: 6, height: 6, borderRadius: 1, background: zi.color, flexShrink: 0 }}/>
+                          <span style={{ fontSize: 9, fontFamily: 'var(--mono)', color: esRef ? 'var(--green)' : 'var(--muted)' }}>
+                            Z{z.zona}: <span style={{ color: esRef ? 'var(--green)' : 'var(--text)', fontWeight: esRef ? 700 : 400 }}>{val}</span>
+                          </span>
+                        </div>
+                      )
+                    })}
                   </div>
-                )
-              })}
+                  <button
+                    onClick={() => setKgPorHa({})}
+                    style={{ marginTop: 6, fontSize: 9, color: '#fca5a5', fontFamily: 'var(--mono)', background: 'transparent', border: 'none', cursor: 'pointer', textDecoration: 'underline' }}
+                  >
+                    Borrar valores
+                  </button>
+                </div>
+              )}
 
               <button
                 onClick={() => calcularProduccion(kgHaCalculado)}
